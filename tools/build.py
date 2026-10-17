@@ -186,7 +186,20 @@ def main(noiso=False):
 
     # ---- telop subtitles
     for name, txt in telop.items():
-        patched['/PSP_GAME/USRDIR/data/telop/' + name] = encode_telop(txt)
+        orig = open(R + 'telop/' + name, 'rb').read()
+        b = fit_telop(txt, len(orig))
+        if len(b) > len(orig):
+            # restore the lines that grew the most to the original bytes until the file fits
+            kl = b.split(bytes([13, 10])); ol = orig.split(bytes([13, 10]))
+            if len(kl) == len(ol):
+                order = sorted(range(len(kl)), key=lambda i: len(ol[i]) - len(kl[i]))
+                for i in order:
+                    if sum(len(x) + 2 for x in kl) - 2 <= len(orig): break
+                    kl[i] = ol[i]
+                b = bytes([13, 10]).join(kl)
+        if len(b) > len(orig):
+            log.append('telop %s grew %d > %d' % (name, len(b), len(orig)))
+        patched['/PSP_GAME/USRDIR/data/telop/' + name] = b
 
     # ---- chapter title cards (pixels inside event files)
     cdir = os.path.join(ROOT, 'work/gfx_cards')
@@ -243,6 +256,34 @@ def encode_telop(txt):
         out += b + bytes([13, 10])
     return out
 
+
+
+def fit_telop(txt, limit):
+    """keep subtitle files no larger than the originals (the game reads them into its own buffers)"""
+    b = encode_telop(txt)
+    if len(b) <= limit: return b
+    lines = txt.replace(chr(13), '').rstrip(chr(10)).split(chr(10))
+    # 1) drop free comment lines' text (keep '#', EVT-ID and end markers)
+    lines = [('#' if l.startswith('#') and not l.startswith(('# EVT-ID', '#pspppl')) and not l.startswith('#' + chr(9)) else l) for l in lines]
+    b = encode_telop(chr(10).join(lines))
+    if len(b) <= limit: return b
+    # 2) shorter ellipses and no spaces in subtitles
+    out = []
+    for l in lines:
+        if re.match(r'^\d+:\d+	\d+:\d+	', l):
+            a, c, t = l.split(chr(9), 2)
+            t = t.replace('……', '…')
+            l = chr(9).join([a, c, t])
+        out.append(l)
+    b = encode_telop(chr(10).join(out))
+    if len(b) <= limit: return b
+    out2 = []
+    for l in out:
+        if re.match(r'^\d+:\d+	\d+:\d+	', l):
+            a, c, t = l.split(chr(9), 2)
+            l = chr(9).join([a, c, t.replace(' ', '')]) if len(encode_telop(chr(10).join(out2 + [l] + out[len(out2) + 1:]))) > limit else l
+        out2.append(l)
+    return encode_telop(chr(10).join(out2))
 
 
 def extra_boot_patches(boot):

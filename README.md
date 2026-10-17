@@ -5,8 +5,8 @@ PSP 일본판 **ポポロクロイス物語 ～ピエトロ王子の冒険～ (U
 ## 적용 방법
 1. 아래 해시와 일치하는 **원본 `.iso`** 를 준비합니다. (CSO·CHD 등으로 변환한 이미지에는 적용할 수 없습니다.)
    - PowerShell: `Get-FileHash -Algorithm MD5 -LiteralPath '.\PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Japan) (v2.01).iso'`
-2. xdeltaUI 같은 도구로 원본 `.iso` 에 `PoPoLoCrois_Pietro_Ouji_no_Bouken_KO_v1.0.xdelta` 를 적용합니다. (Patch = xdelta, Source File = 원본 ISO, Output File = 새 파일명)
-   - 명령줄: `xdelta3 -d -s "PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Japan) (v2.01).iso" PoPoLoCrois_Pietro_Ouji_no_Bouken_KO_v1.0.xdelta "PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Korean).iso"`
+2. xdeltaUI 같은 도구로 원본 `.iso` 에 `PoPoLoCrois_Pietro_Ouji_no_Bouken_KO_v1.0.1.xdelta` 를 적용합니다. (Patch = xdelta, Source File = 원본 ISO, Output File = 새 파일명)
+   - 명령줄: `xdelta3 -d -s "PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Japan) (v2.01).iso" PoPoLoCrois_Pietro_Ouji_no_Bouken_KO_v1.0.1.xdelta "PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Korean).iso"`
 3. 만들어진 ISO를 PPSSPP 또는 커스텀 펌웨어에서 실행합니다.
 
 | 항목 | 값 |
@@ -14,9 +14,9 @@ PSP 일본판 **ポポロクロイス物語 ～ピエトロ王子の冒険～ (U
 | 원본 ISO 크기 | 1,168,572,416 바이트 |
 | 원본 ISO MD5 | `7cd263eb25237c7d73127315ffd08ed1` |
 | 원본 ISO SHA-256 | `8255ed48eeeaf198a538b24486cfd327ccb346646c0efdb1c70450e8863cd068` |
-| xdelta SHA-256 | `781fc242bd1df4f50b19c4b4804d725e0c4ba48f4b5788f8eb3a98f2b8b4fbae` |
-| 결과 ISO 크기 | 1,168,584,704 바이트 |
-| 결과 ISO SHA-256 | `aa1e1544f96921f32d1d4dca340f5a1909db29e9cdce0a2d66346f17d8dc7004` |
+| xdelta SHA-256 | `b057ac00d732a7022af2700519f7adff0a4cd88cbbf415a8a43ab3da352472c1` |
+| 결과 ISO 크기 | 1,168,572,416 바이트 |
+| 결과 ISO SHA-256 | `682cc316ea2fa7e2cfff9a65ef2ecd6f3bf4fee70769c4a773404dc7e831ad71` |
 
 ## 주의
 - 복호화한 실행 파일(BOOT.BIN)을 EBOOT로 넣었기 때문에 **PPSSPP·커스텀 펌웨어 전용**입니다. 정품 펌웨어에서는 부팅되지 않습니다.

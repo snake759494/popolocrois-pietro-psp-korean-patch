@@ -8,7 +8,7 @@ import os, sys, json, re, glob, struct, shutil, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import kcode
 from msgdb import R, ROOT
-from msgpatch import repack
+from msgpatch import repack, repack_slots
 
 ORIG = os.path.join(ROOT, 'PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Japan) (v2.01).iso')
 OUTISO = os.environ.get('OUTISO') or os.path.join(ROOT, 'PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Korean).iso')
@@ -27,7 +27,9 @@ def norm(s):
 
 
 def load_trans():
-    src = json.load(open(os.path.join(ROOT, 'work/msg_src.json'), encoding='utf-8'))
+    # ids of trans/out/NNN.json refer to the v1 extraction (work/msg_src_v1.json);
+    # later additions are keyed by the Japanese text in trans/extra_msg.json
+    src = json.load(open(os.path.join(ROOT, 'work/msg_src_v1.json'), encoding='utf-8'))
     tr = {}
     for f in sorted(glob.glob(os.path.join(ROOT, 'trans/out/[0-9]*.json'))):
         for k, v in json.load(open(f, encoding='utf-8')).items():
@@ -38,7 +40,10 @@ def load_trans():
     m = {}
     for i, e in enumerate(src):
         if i in tr: m[e['jp']] = norm(tr[i])
-    return m, len(src), len(tr)
+    for ex in sorted(glob.glob(os.path.join(ROOT, 'trans/extra_msg*.json'))):
+        for jp, ko in json.load(open(ex, encoding='utf-8')).items(): m[jp] = norm(ko)
+    cur = json.load(open(os.path.join(ROOT, 'work/msg_src.json'), encoding='utf-8'))
+    return m, len(cur), sum(1 for e in cur if e['jp'] in m)
 
 
 def markup_bytes(s):
@@ -79,7 +84,7 @@ def main(noiso=False):
 
     # ---- Hangul set & fonts
     extra = json.load(open(os.path.join(ROOT, 'trans/boot_extra.json'), encoding='utf-8'))['sjis']
-    hs = collect_hangul(list(tmap.values()) + list(speakers.values()) + list(boot_tr.values()) + list(telop.values()) + list(extra.values()))
+    hs = collect_hangul(list(json.load(open(os.path.join(ROOT, 'trans/inline_msg.json'), encoding='utf-8')).values()) + list(tmap.values()) + list(speakers.values()) + list(boot_tr.values()) + list(telop.values()) + list(extra.values()))
     print('hangul syllables', len(hs))
     os.makedirs(os.path.join(ROOT, 'work'), exist_ok=True)
     open(kcode.HFILE, 'w', encoding='utf-8').write(''.join(hs))
@@ -98,11 +103,16 @@ def main(noiso=False):
     # blocks whose string area also holds other data (false positives) must never be repacked
     foreign = {(f, p) for f, p, *_ in json.load(open(os.path.join(ROOT, 'work/foreign.json')))}
     stats = collections.Counter(); overflow = []
+    inline_tr = json.load(open(os.path.join(ROOT, 'trans/inline_msg.json'), encoding='utf-8'))
+    inline_by_file = collections.defaultdict(list)
+    for x in json.load(open(os.path.join(ROOT, 'work/inline_keep.json'), encoding='utf-8')):
+        inline_by_file[x['file']].append(x)
+    inline_ok = []
     for f, blocks in occ.items():
         d = bytearray(open(R + f, 'rb').read())
         changed = False
         for p, keys in blocks:
-            if (f, p) in foreign or all(k is None for k in keys): continue
+            if all(k is None for k in keys): continue
             n, = struct.unpack_from('<H', d, p + 0x38)
             t, = struct.unpack_from('<I', d, p + 0x3c)
             news = []
@@ -123,11 +133,17 @@ def main(noiso=False):
                 if spk is not None:
                     body = '{17}' + speakers.get(spk, spk) + '{18}' + body
                 try:
-                    b = markup_bytes(body) + bytes([end])
+                    b = markup_bytes(body) + (bytes([end]) if end >= 0 else b'')
                 except UnicodeEncodeError as e:
                     log.append('encode error %s: %r (%s)' % (f, body, e)); stats['encerr'] += 1
                     news.append(orig); continue
                 news.append(b); stats['ok'] += 1
+            if (f, p) in foreign:
+                ov = 0
+                nf = repack_slots(d, p, news)
+                if nf: stats['slot_fail'] += nf; log.append('slot fail %s %x %d' % (f, p, nf))
+                changed = True
+                continue
             ov = repack(d, p, news)
             if ov > 0:
                 # reclaim space from developer-only debug strings of this block
@@ -143,18 +159,41 @@ def main(noiso=False):
                 stats['overflow_blocks'] += 1
             else:
                 changed = True
+        # script-inline strings (outside message blocks): same length, padded with spaces
+        for x in inline_by_file.get(f, []):
+            ko = inline_tr.get(x['jp'])
+            if ko is None: continue
+            b = b''
+            TOKS = (chr(10) + chr(11), '$w', '@')
+            for part in re.split('(' + chr(10) + chr(11) + r'|\$w|@)', ko):
+                if part in TOKS: b += part.encode('ascii')
+                elif part: b += kcode.encode_text(part)
+            if len(b) > x['len']:
+                log.append('inline overflow %s %x %d>%d' % (f, x['off'], len(b), x['len'])); continue
+            d[x['off']:x['off'] + x['len']] = b + b' ' * (x['len'] - len(b))
+            inline_ok.append(f); changed = True
         if changed:
             orig = open(R + f, 'rb').read()
             allowed = bytearray(len(orig))
             for p2, keys2 in blocks:
-                if (f, p2) in foreign or all(k is None for k in keys2): continue
+                if all(k is None for k in keys2): continue
                 n2, = struct.unpack_from('<H', orig, p2 + 0x38); t2, = struct.unpack_from('<I', orig, p2 + 0x3c)
-                lo2 = min(struct.unpack_from('<HHI', orig, p2 + t2 + 8 * j)[2] for j in range(n2))
-                allowed[p2 + lo2:p2 + t2 + 8 * n2] = b'' * (t2 + 8 * n2 - lo2)
+                ents2 = [struct.unpack_from('<HHI', orig, p2 + t2 + 8 * j) for j in range(n2)]
+                allowed[p2 + t2:p2 + t2 + 8 * n2] = bytes([1]) * (8 * n2)
+                if (f, p2) in foreign:
+                    for _, ln2, off2 in ents2:
+                        a2 = p2 + off2; b2 = a2 + ln2 + 1
+                        while b2 < p2 + t2 and orig[b2] == 0x24: b2 += 1
+                        allowed[a2:b2] = bytes([1]) * (b2 - a2)
+                else:
+                    lo2 = min(e[2] for e in ents2)
+                    allowed[p2 + lo2:p2 + t2] = bytes([1]) * (t2 - lo2)
+            for x in inline_by_file.get(f, []):
+                allowed[x['off']:x['off'] + x['len']] = bytes([1]) * x['len']
             bad = [k for k in range(len(orig)) if orig[k] != d[k] and not allowed[k]]
             assert len(d) == len(orig) and not bad, (f, len(bad))
             patched['/PSP_GAME/USRDIR/data/' + f] = bytes(d)
-    print('messages', dict(stats))
+    print('messages', dict(stats), 'inline', len(inline_ok))
     for o in overflow: print('  OVERFLOW', o)
 
     # ---- BOOT.BIN in place

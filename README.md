@@ -5,8 +5,8 @@ PSP 일본판 **ポポロクロイス物語 ～ピエトロ王子の冒険～ (U
 ## 적용 방법
 1. 아래 해시와 일치하는 **원본 `.iso`** 를 준비합니다. (CSO·CHD 등으로 변환한 이미지에는 적용할 수 없습니다.)
    - PowerShell: `Get-FileHash -Algorithm MD5 -LiteralPath '.\PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Japan) (v2.01).iso'`
-2. xdeltaUI 같은 도구로 원본 `.iso` 에 `PoPoLoCrois_Pietro_Ouji_no_Bouken_KO_v1.0.1.xdelta` 를 적용합니다. (Patch = xdelta, Source File = 원본 ISO, Output File = 새 파일명)
-   - 명령줄: `xdelta3 -d -s "PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Japan) (v2.01).iso" PoPoLoCrois_Pietro_Ouji_no_Bouken_KO_v1.0.1.xdelta "PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Korean).iso"`
+2. xdeltaUI 같은 도구로 원본 `.iso` 에 `PoPoLoCrois_Pietro_Ouji_no_Bouken_KO_v1.0.2.xdelta` 를 적용합니다. (Patch = xdelta, Source File = 원본 ISO, Output File = 새 파일명)
+   - 명령줄: `xdelta3 -d -s "PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Japan) (v2.01).iso" PoPoLoCrois_Pietro_Ouji_no_Bouken_KO_v1.0.2.xdelta "PoPoLoCrois Monogatari - Pietro Ouji no Bouken (Korean).iso"`
 3. 만들어진 ISO를 PPSSPP 또는 커스텀 펌웨어에서 실행합니다.
 
 | 항목 | 값 |
@@ -14,17 +14,17 @@ PSP 일본판 **ポポロクロイス物語 ～ピエトロ王子の冒険～ (U
 | 원본 ISO 크기 | 1,168,572,416 바이트 |
 | 원본 ISO MD5 | `7cd263eb25237c7d73127315ffd08ed1` |
 | 원본 ISO SHA-256 | `8255ed48eeeaf198a538b24486cfd327ccb346646c0efdb1c70450e8863cd068` |
-| xdelta SHA-256 | `b057ac00d732a7022af2700519f7adff0a4cd88cbbf415a8a43ab3da352472c1` |
+| xdelta SHA-256 | `dad1aefd28800ff18f99527bb9316b5c9af4e326fd345696dc13a1ab61fa3479` |
 | 결과 ISO 크기 | 1,168,572,416 바이트 |
-| 결과 ISO SHA-256 | `682cc316ea2fa7e2cfff9a65ef2ecd6f3bf4fee70769c4a773404dc7e831ad71` |
+| 결과 ISO SHA-256 | `bfaa9a014447e4acee9a4f5cc9ec3d5b0742dbeaa80d1179045e3fee8bff3d50` |
 
 ## 주의
 - 복호화한 실행 파일(BOOT.BIN)을 EBOOT로 넣었기 때문에 **PPSSPP·커스텀 펌웨어 전용**입니다. 정품 펌웨어에서는 부팅되지 않습니다.
 - 다른 버전 패치나 원본에서 만든 **상태저장(세이브 스테이트)** 은 불러오지 마세요. 메모리에 이전 데이터가 남아 화면이 깨질 수 있습니다. 일반 세이브는 그대로 쓸 수 있습니다.
 
 ## 한글화 내용
-- 이벤트·마을·필드 대사 전체: 고유 문장 20,604개(화자 이름 184개 포함)
-- 실행 파일 문자열 2,091개: 메뉴, 아이템·장비·기술·몬스터 이름과 설명, 지명, 시스템 메시지, 전투 튜토리얼 문구
+- 이벤트·마을·필드 대사 전체: 고유 문장 21,083개(화자 이름 184개 포함), 스크립트에 직접 들어 있는 문장 22곳
+- 실행 파일 문자열 2,119개(여관·상점 안내 포함): 메뉴, 아이템·장비·기술·몬스터 이름과 설명, 지명, 시스템 메시지, 전투 튜토리얼 문구
 - 세이브 데이터 표시 문자열(UTF-8) 88개(장 제목·저장 장소), XMB 게임 제목
 - 애니메이션 이벤트 자막 31개 파일과 스태프롤
 - 그림 글자: 타이틀 로고, 장 제목 카드 12장, 월드맵 지방 이름 판 15개·장소 이름 56개, 카드 미니게임 이름 라벨

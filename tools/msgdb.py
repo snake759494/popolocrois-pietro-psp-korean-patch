@@ -11,17 +11,20 @@ SIGS = {b'\x01\x00\x02\x00', b'\x03\x00\x00\x00', b'\x00\x00\x02\x00', b'\x02\x0
 
 def find_blocks(d):
     out = []
-    for p in range(0, len(d) - 0x48, 16):
+    for p in range(0, len(d) - 0x48, 4):
         if d[p:p + 4] not in SIGS: continue
         n, = struct.unpack_from('<H', d, p + 0x38)
         if not 0 < n < 4000: continue
         t, = struct.unpack_from('<I', d, p + 0x3c)
         if t < 0x48 or t & 3 or p + t + 8 * n > len(d): continue
-        ok = True
+        ok = True; seen = set()
         for i in range(n):
             idx, ln, off = struct.unpack_from('<HHI', d, p + t + 8 * i)
-            if idx != i or off < 0x40 or off + ln > t or ln == 0:
+            # message numbers are increasing but may have gaps
+            # message numbers are unique but neither contiguous nor sorted
+            if (idx > 4000 and idx != 0xffff) or off < 0x40 or off + ln > t or ln == 0:
                 ok = False; break
+            seen.add(idx)
         if ok:
             out.append((p, n, t))
     return out

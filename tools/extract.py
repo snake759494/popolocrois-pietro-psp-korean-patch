@@ -12,8 +12,9 @@ ARG1 = {0x10, 0x14, 0x15, 0x16, 0x19}   # control codes taking one argument byte
 
 def to_markup(s):
     """bytes (with end code) -> markup or None if not text"""
-    if not s or s[-1] not in (0x13, 0x1a): return None
-    body = s[:-1]
+    if not s: return None
+    # most strings end with their end code (0x13 / 0x1A); some tables store the length without it
+    body = s[:-1] if s[-1] in (0x13, 0x1a) else s
     o = ''; j = 0
     while j < len(body):
         b = body[j]
@@ -31,6 +32,8 @@ def to_markup(s):
             o += '{%02x %02x}' % (b, body[j + 1]); j += 2
         elif b in (0x09, 0x0c, 0x12, 0x17, 0x18):
             o += '{%02x}' % b; j += 1
+        elif 0xa1 <= b <= 0xdf:
+            o += bytes([b]).decode('cp932'); j += 1      # half-width katakana / '･'
         elif 0x20 <= b < 0x7f and b not in (0x7b, 0x7d):
             o += chr(b); j += 1
         else:
@@ -63,7 +66,7 @@ def main():
                 if e is None:
                     e = db[key] = {'jp': key, 'n': 0, 'src': f}
                 e['n'] += 1
-                keys.append([mm.group(1) if mm else None, key, s[-1]])
+                keys.append([mm.group(1) if mm else None, key, s[-1] if s[-1] in (0x13, 0x1a) else -1])
             occ[f].append([p, keys])
     os.makedirs(os.path.join(ROOT, 'trans'), exist_ok=True)
     json.dump(occ, open(os.path.join(ROOT, 'work/msg_occ.json'), 'w', encoding='utf-8'), ensure_ascii=False)

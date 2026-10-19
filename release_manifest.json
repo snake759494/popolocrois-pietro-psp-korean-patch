@@ -1,11 +1,11 @@
 {
- "version": "v1.0.2",
- "asset": "PoPoLoCrois_Pietro_Ouji_no_Bouken_KO_v1.0.2.xdelta",
- "asset_size": 25280917,
- "asset_sha256": "dad1aefd28800ff18f99527bb9316b5c9af4e326fd345696dc13a1ab61fa3479",
+ "version": "v1.0.3",
+ "asset": "PoPoLoCrois_Pietro_Ouji_no_Bouken_KO_v1.0.3.xdelta",
+ "asset_size": 25281058,
+ "asset_sha256": "f1d04cd98f0de4516a373bf7fa6af990da9aa93a9c66f3fada043492029c7991",
  "source_iso_size": 1168572416,
  "source_iso_md5": "7cd263eb25237c7d73127315ffd08ed1",
  "source_iso_sha256": "8255ed48eeeaf198a538b24486cfd327ccb346646c0efdb1c70450e8863cd068",
  "result_iso_size": 1168572416,
- "result_iso_sha256": "bfaa9a014447e4acee9a4f5cc9ec3d5b0742dbeaa80d1179045e3fee8bff3d50"
+ "result_iso_sha256": "8446e560b67cb71447fccc118d21a49c60e0843114a41447b7a795ab080934c6"
 }

@@ -316,13 +316,8 @@ def fit_telop(txt, limit):
         out.append(l)
     b = encode_telop(chr(10).join(out))
     if len(b) <= limit: return b
-    out2 = []
-    for l in out:
-        if re.match(r'^\d+:\d+	\d+:\d+	', l):
-            a, c, t = l.split(chr(9), 2)
-            l = chr(9).join([a, c, t.replace(' ', '')]) if len(encode_telop(chr(10).join(out2 + [l] + out[len(out2) + 1:]))) > limit else l
-        out2.append(l)
-    return encode_telop(chr(10).join(out2))
+    return b
+
 
 
 def extra_boot_patches(boot):
@@ -336,6 +331,10 @@ def extra_boot_patches(boot):
             while e < len(boot) and boot[e] == 0: e += 1
             budget = e - off - 1
             b = markup_bytes(ko) if kind == 'sjis' else ko.encode('utf-8')
+            # message strings end with the game's end code (0x1A / 0x13) before the NUL: keep it,
+            # otherwise the text runs on into the next message
+            if kind == 'sjis' and boot[end - 1] in (0x13, 0x1a) and not b.endswith(bytes([boot[end - 1]])):
+                b += bytes([boot[end - 1]])
             if len(b) > budget:
                 # UTF-8: cut at a character boundary
                 if kind == 'utf8':
